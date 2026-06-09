@@ -1,0 +1,33 @@
+{
+  "name": "@time-locked/backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@clerk/express": "^1.0.0",
+    "dotenv": "^16.0.0",
+    "better-sqlite3": "^11.0.0",
+    "drizzle-orm": "^0.45.2",
+    "express": "^5.0.0",
+    "node-cron": "^3.0.0",
+    "vite": "8.0.16",
+    "web-push": "^3.6.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/node-cron": "^3.0.0",
+    "@types/web-push": "^3.6.0",
+    "drizzle-kit": "^0.31.10",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0"
+  }
+}
