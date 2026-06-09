@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
 import { decisions, decisionTags, notes, tags } from "../db/schema.js";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { requireAuth, getUserId } from "../middleware/auth.js";
+import { getAuthorizedTagIds } from "../services/tagAccess.js";
 import { randomUUID } from "crypto";
 
 const router = Router();
@@ -74,6 +75,33 @@ router.post("/", (req, res) => {
     return;
   }
 
+  const requestedTagIds = tagIds === undefined ? [] : tagIds;
+  if (!Array.isArray(requestedTagIds) || requestedTagIds.some((tagId) => typeof tagId !== "string")) {
+    res.status(400).json({ error: "tagIds must be an array of strings" });
+    return;
+  }
+
+  let authorizedTagIds: string[] = [];
+  if (requestedTagIds.length) {
+    const visibleTags = db
+      .select({ id: tags.id, userId: tags.userId })
+      .from(tags)
+      .where(
+        and(
+          inArray(tags.id, requestedTagIds),
+          or(isNull(tags.userId), eq(tags.userId, userId))
+        )
+      )
+      .all();
+
+    try {
+      authorizedTagIds = getAuthorizedTagIds(userId, requestedTagIds, visibleTags);
+    } catch {
+      res.status(400).json({ error: "Invalid tag selection" });
+      return;
+    }
+  }
+
   const id = randomUUID();
   const now = new Date();
 
@@ -89,9 +117,9 @@ router.post("/", (req, res) => {
     updatedAt: now,
   }).run();
 
-  if (tagIds?.length) {
+  if (authorizedTagIds.length) {
     db.insert(decisionTags).values(
-      tagIds.map((tagId: string) => ({ decisionId: id, tagId }))
+      authorizedTagIds.map((tagId) => ({ decisionId: id, tagId }))
     ).run();
   }
 
