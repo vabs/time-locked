@@ -1,0 +1,7 @@
+procs:
+  backend:
+    cmd: "npm run dev -w backend"
+    cwd: "."
+  frontend:
+    cmd: "npm run dev -w frontend"
+    cwd: "."
