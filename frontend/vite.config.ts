@@ -21,15 +21,6 @@ export default defineConfig({
           { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
         ],
       },
-      workbox: {
-        runtimeCaching: [
-          {
-            urlPattern: /^\/api\//,
-            handler: "NetworkFirst",
-            options: { cacheName: "api-cache" },
-          },
-        ],
-      },
     }),
   ],
   resolve: {
