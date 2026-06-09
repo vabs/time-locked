@@ -20,7 +20,7 @@ export default function Settings() {
   async function handleEnablePush() {
     setPushLoading(true);
     try {
-      await subscribeToPush(api.post);
+      await subscribeToPush(api.get, api.post);
       setPushEnabled(Notification.permission === "granted");
     } finally {
       setPushLoading(false);

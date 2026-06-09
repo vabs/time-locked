@@ -3,16 +3,25 @@ import { db } from "../db/index.js";
 import { pushSubscriptions } from "../db/schema.js";
 import { eq } from "drizzle-orm";
 
-webpush.setVapidDetails(
-  `mailto:${process.env.VAPID_EMAIL}`,
-  process.env.VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
+const isPushConfigured =
+  Boolean(process.env.VAPID_EMAIL) &&
+  Boolean(process.env.VAPID_PUBLIC_KEY) &&
+  Boolean(process.env.VAPID_PRIVATE_KEY);
+
+if (isPushConfigured) {
+  webpush.setVapidDetails(
+    `mailto:${process.env.VAPID_EMAIL}`,
+    process.env.VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  );
+}
 
 export async function sendPushToUser(
   userId: string,
   payload: { title: string; body: string; decisionId: string }
 ) {
+  if (!isPushConfigured) return;
+
   const subs = db
     .select()
     .from(pushSubscriptions)

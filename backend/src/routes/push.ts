@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
 import { pushSubscriptions } from "../db/schema.js";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { requireAuth, getUserId } from "../middleware/auth.js";
 import { randomUUID } from "crypto";
 
@@ -10,6 +10,11 @@ const router = Router();
 router.use(requireAuth);
 
 router.get("/vapid-public-key", (_req, res) => {
+  if (!process.env.VAPID_PUBLIC_KEY) {
+    res.status(503).json({ error: "Push notifications are not configured" });
+    return;
+  }
+
   res.json({ publicKey: process.env.VAPID_PUBLIC_KEY });
 });
 
@@ -41,9 +46,12 @@ router.post("/subscribe", (req, res) => {
 });
 
 router.delete("/unsubscribe", (req, res) => {
+  const userId = getUserId(req);
   const { endpoint } = req.body;
   if (!endpoint) { res.status(400).json({ error: "endpoint required" }); return; }
-  db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, endpoint)).run();
+  db.delete(pushSubscriptions)
+    .where(and(eq(pushSubscriptions.endpoint, endpoint), eq(pushSubscriptions.userId, userId)))
+    .run();
   res.json({ success: true });
 });
 

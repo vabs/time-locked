@@ -1,4 +1,5 @@
 export async function subscribeToPush(
+  get: (path: string) => Promise<unknown>,
   post: (path: string, body: unknown) => Promise<unknown>
 ) {
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
@@ -6,9 +7,13 @@ export async function subscribeToPush(
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return;
 
-  const { publicKey } = (await fetch("/api/push/vapid-public-key").then((r) =>
-    r.json()
-  )) as { publicKey: string };
+  const { publicKey } = (await get("/push/vapid-public-key")) as {
+    publicKey?: string;
+  };
+
+  if (!publicKey) {
+    throw new Error("Push notifications are not configured");
+  }
 
   const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.subscribe({
