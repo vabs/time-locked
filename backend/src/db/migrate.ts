@@ -1,5 +1,9 @@
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 import { db } from "./index.js";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 
-migrate(db, { migrationsFolder: "./drizzle" });
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+migrate(db, { migrationsFolder: join(__dirname, "../../drizzle") });
 console.log("Migrations applied.");
