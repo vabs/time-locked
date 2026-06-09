@@ -5,5 +5,4 @@ data/
 *.db
 *.db-shm
 *.db-wal
-drizzle/
 .DS_Store

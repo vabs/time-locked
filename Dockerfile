@@ -26,10 +26,11 @@ COPY backend/package.json ./backend/
 RUN npm install --omit=dev --workspace=backend
 
 COPY --from=backend-build /app/backend/dist ./backend/dist
+COPY backend/drizzle ./backend/drizzle
 COPY --from=frontend-build /app/frontend/dist ./frontend/dist
 
 EXPOSE 3001
 
 ENV NODE_ENV=production
 
-CMD ["node", "backend/dist/index.js"]
+CMD ["sh", "-c", "node backend/dist/db/migrate.js && node backend/dist/db/seed.js && node backend/dist/index.js"]
