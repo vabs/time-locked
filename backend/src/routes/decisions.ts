@@ -1,22 +1,31 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
 import { decisions, decisionTags, notes, tags } from "../db/schema.js";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { requireAuth, getUserId } from "../middleware/auth.js";
 import { randomUUID } from "crypto";
 
 const router = Router();
+const DECISION_STATUSES = ["running", "paused", "expired", "stopped"] as const;
+type DecisionStatus = (typeof DECISION_STATUSES)[number];
+
+function parseDecisionStatus(value: unknown): DecisionStatus | undefined {
+  return typeof value === "string" &&
+    DECISION_STATUSES.includes(value as DecisionStatus)
+    ? (value as DecisionStatus)
+    : undefined;
+}
 
 router.use(requireAuth);
 
 router.get("/", (req, res) => {
   const userId = getUserId(req);
-  const { status } = req.query;
+  const status = parseDecisionStatus(req.query.status);
 
   const query = db.select().from(decisions).where(
     and(
       eq(decisions.userId, userId),
-      status ? eq(decisions.status, status as string) : undefined
+      status ? eq(decisions.status, status) : undefined
     )
   ).orderBy(desc(decisions.createdAt));
 
