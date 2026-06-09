@@ -9,7 +9,7 @@ export default function NewDecision() {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [duration, setDuration] = useState(TIMER_PRESETS[0].value);
+  const [duration, setDuration] = useState<number>(TIMER_PRESETS[0].value);
   const [tags, setTags] = useState<Tag[]>([]);
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);

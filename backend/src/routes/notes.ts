@@ -11,6 +11,7 @@ router.use(requireAuth);
 
 router.post("/", (req, res) => {
   const userId = getUserId(req);
+  const { decisionId } = req.params as { decisionId: string };
   const { content } = req.body;
 
   if (!content) { res.status(400).json({ error: "content required" }); return; }
@@ -18,7 +19,7 @@ router.post("/", (req, res) => {
   const decision = db
     .select()
     .from(decisions)
-    .where(and(eq(decisions.id, req.params.decisionId), eq(decisions.userId, userId)))
+    .where(and(eq(decisions.id, decisionId), eq(decisions.userId, userId)))
     .get();
 
   if (!decision) { res.status(404).json({ error: "Decision not found" }); return; }
@@ -41,17 +42,18 @@ router.post("/", (req, res) => {
 
 router.delete("/:noteId", (req, res) => {
   const userId = getUserId(req);
+  const { decisionId, noteId } = req.params as { decisionId: string; noteId: string };
 
   const decision = db
     .select()
     .from(decisions)
-    .where(and(eq(decisions.id, req.params.decisionId), eq(decisions.userId, userId)))
+    .where(and(eq(decisions.id, decisionId), eq(decisions.userId, userId)))
     .get();
 
   if (!decision) { res.status(404).json({ error: "Decision not found" }); return; }
 
   db.delete(notes)
-    .where(and(eq(notes.id, req.params.noteId), eq(notes.decisionId, decision.id)))
+    .where(and(eq(notes.id, noteId), eq(notes.decisionId, decision.id)))
     .run();
 
   res.json({ success: true });
