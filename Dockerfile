@@ -9,6 +9,8 @@ RUN npm install --frozen-lockfile
 
 # Build frontend
 FROM base AS frontend-build
+ARG VITE_CLERK_PUBLISHABLE_KEY
+ENV VITE_CLERK_PUBLISHABLE_KEY=$VITE_CLERK_PUBLISHABLE_KEY
 COPY frontend ./frontend
 RUN npm run build -w frontend
 
