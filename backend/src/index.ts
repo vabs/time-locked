@@ -1,7 +1,9 @@
 import "dotenv/config";
 import express from "express";
 import { clerkAuth } from "./middleware/auth.js";
+import authRouter from "./routes/auth.js";
 import decisionsRouter from "./routes/decisions.js";
+import meRouter from "./routes/me.js";
 import notesRouter from "./routes/notes.js";
 import tagsRouter from "./routes/tags.js";
 import pushRouter from "./routes/push.js";
@@ -16,6 +18,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 app.use(express.json());
 app.use(clerkAuth);
 
+app.use("/api/auth", authRouter);
+app.use("/api/me", meRouter);
 app.use("/api/decisions", decisionsRouter);
 app.use("/api/decisions/:decisionId/notes", notesRouter);
 app.use("/api/tags", tagsRouter);
