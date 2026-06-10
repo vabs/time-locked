@@ -1,4 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
+import { createServer } from "node:http";
+import open from "open";
+import type { CliConfig } from "./config.js";
 
 export interface PkcePair {
   verifier: string;
@@ -96,6 +99,131 @@ export async function exchangeCodeForTokens(
 
   if (!res.ok) throw new Error("Unable to exchange authorization code");
   return (await res.json()) as TokenResponse;
+}
+
+export async function runBrowserLogin(input: {
+  apiUrl: string;
+  fetchImpl?: typeof fetch;
+  openUrl?: (url: string) => Promise<unknown>;
+}): Promise<CliConfig> {
+  const fetchImpl = input.fetchImpl ?? fetch;
+  const authConfig = await fetchAuthConfig(input.apiUrl, fetchImpl);
+  const metadata = await fetchOAuthMetadata(authConfig.issuerUrl, fetchImpl);
+  const pkce = await createPkcePair();
+  const state = randomToken();
+  const callback = await waitForCallback();
+  const redirectUri = authConfig.redirectUriPattern.replace(
+    "{port}",
+    String(callback.port)
+  );
+
+  const authorizeUrl = buildAuthorizeUrl({
+    authorizationEndpoint: metadata.authorization_endpoint,
+    clientId: authConfig.clientId,
+    redirectUri,
+    codeChallenge: pkce.challenge,
+    state,
+    scopes: authConfig.scopes,
+  });
+
+  let code: string;
+  try {
+    await (input.openUrl ?? open)(authorizeUrl.toString());
+    code = await callback.waitForCode(state);
+  } catch (err) {
+    callback.close();
+    throw err;
+  }
+
+  const token = await exchangeCodeForTokens(
+    {
+      tokenEndpoint: metadata.token_endpoint,
+      clientId: authConfig.clientId,
+      code,
+      codeVerifier: pkce.verifier,
+      redirectUri,
+    },
+    fetchImpl
+  );
+
+  return {
+    apiUrl: input.apiUrl,
+    issuerUrl: authConfig.issuerUrl,
+    clientId: authConfig.clientId,
+    accessToken: token.access_token,
+    refreshToken: token.refresh_token,
+    expiresAt: Date.now() + token.expires_in * 1000,
+  };
+}
+
+async function waitForCallback(): Promise<{
+  port: number;
+  waitForCode: (expectedState: string) => Promise<string>;
+  close: () => void;
+}> {
+  let resolveCode: (code: string) => void;
+  let rejectCode: (err: Error) => void;
+  const codePromise = new Promise<string>((resolve, reject) => {
+    resolveCode = resolve;
+    rejectCode = reject;
+  });
+
+  let closed = false;
+  const close = () => {
+    if (!closed) {
+      closed = true;
+      server.close();
+    }
+  };
+
+  const server = createServer((req, res) => {
+    const url = new URL(req.url ?? "/", "http://127.0.0.1");
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+    const error = url.searchParams.get("error");
+
+    if (error) {
+      res.writeHead(400).end("Time Locked login failed. You can close this tab.");
+      rejectCode(new Error(error));
+      close();
+      return;
+    }
+
+    if (!code || !state) {
+      res.writeHead(400).end("Missing login callback parameters.");
+      return;
+    }
+
+    res.writeHead(200).end("Time Locked login complete. You can close this tab.");
+    resolveCode(`${state}:${code}`);
+    close();
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", resolve);
+  });
+
+  const address = server.address();
+  if (!address || typeof address === "string") {
+    server.close();
+    throw new Error("Unable to start login callback server");
+  }
+
+  return {
+    port: address.port,
+    close,
+    waitForCode: async (expectedState) => {
+      const value = await codePromise;
+      const separator = value.indexOf(":");
+      const state = value.slice(0, separator);
+      const code = value.slice(separator + 1);
+      if (state !== expectedState) {
+        throw new Error("Login state did not match");
+      }
+      return code;
+    },
+  };
 }
 
 function base64Url(buffer: Buffer): string {
