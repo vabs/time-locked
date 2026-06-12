@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
+import { registerDecisionCommands } from "./commands/decisions.js";
 import type { CliConfig } from "./lib/config.js";
 
 export interface CliDependencies {
@@ -31,6 +32,7 @@ export function createProgram(deps: CliDependencies = {}): Command {
     .option("--no-color", "Disable color");
 
   registerAuthCommands(program, dependencies);
+  registerDecisionCommands(program, dependencies);
 
   return program;
 }
