@@ -2,7 +2,10 @@
 import { Command } from "commander";
 import { registerAuthCommands } from "./commands/auth.js";
 import { registerDecisionCommands } from "./commands/decisions.js";
+import { registerNotesCommands } from "./commands/notes.js";
+import { ApiClient } from "./lib/api-client.js";
 import type { CliConfig } from "./lib/config.js";
+import { clearConfig, defaultConfigPath, readConfig, writeConfig } from "./lib/config.js";
 
 export interface CliDependencies {
   apiClient?: {
@@ -16,12 +19,29 @@ export interface CliDependencies {
   writeOutput?: (text: string) => void;
 }
 
-const defaultDependencies: CliDependencies = {
-  writeOutput: (text) => process.stdout.write(text),
-};
+interface DefaultDependencyOptions {
+  configPath?: string;
+  fetchImpl?: typeof fetch;
+}
+
+export function createDefaultDependencies(
+  options: DefaultDependencyOptions = {}
+): CliDependencies {
+  const configPath = options.configPath ?? defaultConfigPath();
+  return {
+    apiClient: new ApiClient({
+      getConfig: () => readConfig(configPath),
+      saveConfig: (config) => writeConfig(configPath, config),
+      fetchImpl: options.fetchImpl,
+    }),
+    clearConfig: () => clearConfig(configPath),
+    saveLoginConfig: (config) => writeConfig(configPath, config),
+    writeOutput: (text) => process.stdout.write(text),
+  };
+}
 
 export function createProgram(deps: CliDependencies = {}): Command {
-  const dependencies = { ...defaultDependencies, ...deps };
+  const dependencies = { ...createDefaultDependencies(), ...deps };
   const program = new Command();
 
   program
@@ -33,6 +53,7 @@ export function createProgram(deps: CliDependencies = {}): Command {
 
   registerAuthCommands(program, dependencies);
   registerDecisionCommands(program, dependencies);
+  registerNotesCommands(program, dependencies);
 
   return program;
 }
