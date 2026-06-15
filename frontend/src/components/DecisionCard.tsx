@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
-import { formatDuration, getTimeRemaining, type Decision, type Tag } from "@/lib/timer";
+import { formatDuration, getTimeRemaining, type Decision } from "@/lib/timer";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Props {
   decision: Decision;
-  tags?: Tag[];
 }
 
-export default function DecisionCard({ decision, tags = [] }: Props) {
+export default function DecisionCard({ decision }: Props) {
   const [remaining, setRemaining] = useState(() => getTimeRemaining(decision));
 
   useEffect(() => {
@@ -18,6 +17,12 @@ export default function DecisionCard({ decision, tags = [] }: Props) {
   }, [decision]);
 
   const pct = Math.max(0, Math.min(100, (remaining / decision.timerDuration) * 100));
+  const cardTags = decision.tags ?? [];
+  const cardNoteCount = decision.noteCount ?? 0;
+  const notesText =
+    cardNoteCount === 0
+      ? "No notes added yet"
+      : `${cardNoteCount} ${cardNoteCount === 1 ? "note" : "notes"} added`;
 
   return (
     <Link
@@ -53,19 +58,25 @@ export default function DecisionCard({ decision, tags = [] }: Props) {
         </>
       )}
 
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-1 mt-3">
-          {tags.map((tag) => (
-            <span
-              key={tag.id}
-              className="text-xs px-2 py-0.5 rounded-full text-white"
-              style={{ backgroundColor: tag.color }}
-            >
-              {tag.name}
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="mt-3 space-y-2">
+        {cardTags.length > 0 ? (
+          <div className="flex flex-wrap gap-1">
+            {cardTags.map((tag) => (
+              <span
+                key={tag.id}
+                className="text-xs px-2 py-0.5 rounded-full text-white"
+                style={{ backgroundColor: tag.color }}
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground">No tags</p>
+        )}
+
+        <p className="text-xs text-muted-foreground">{notesText}</p>
+      </div>
     </Link>
   );
 }

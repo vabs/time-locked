@@ -30,15 +30,25 @@ const STEPS = [
 ];
 
 const FEATURES = [
-  { icon: Clock, label: "Decision timers", text: "Preset waits for quick pauses or longer cooling-off periods." },
-  { icon: NotebookPen, label: "Running notes", text: "Keep every new thought attached to the original decision." },
+  {
+    icon: Clock,
+    label: "Decision timers",
+    text: "The core of Time Locked. Lock any choice behind a deliberate wait, from one hour to one week, so the impulse passes before you act.",
+    featured: true,
+  },
+  {
+    icon: NotebookPen,
+    label: "Running notes",
+    text: "Keep every new thought attached to the original decision while the timer runs.",
+    featured: true,
+  },
   { icon: Pause, label: "Pause and resume", text: "Freeze a countdown when the real world interrupts it." },
   { icon: Archive, label: "Stopped decisions", text: "Abandon a lock without deleting the record." },
   { icon: Tags, label: "Tags", text: "Separate financial, career, health, work, and personal choices." },
-  { icon: Bell, label: "Push alerts", text: "Know when a lock opens, even after installing the PWA." },
+  { icon: Bell, label: "Push alerts", text: "Know when a lock opens, even after installing the app to your phone." },
 ];
 
-const SIGNALS = ["Minimum 1-hour lock", "Offline-ready PWA", "Private decision history"];
+const SIGNALS = ["Free to start", "Works offline", "Private by default"];
 
 export default function LandingPage() {
   return (
@@ -87,17 +97,13 @@ export default function LandingPage() {
             the thinking that usually arrives too late.
           </p>
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col items-start gap-3">
             <SignUpButton mode="modal">
               <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
                 Start a decision journal
               </button>
             </SignUpButton>
-            <SignInButton mode="modal">
-              <button className="inline-flex h-11 items-center justify-center rounded-md border bg-background px-5 text-sm font-semibold transition-colors hover:bg-accent">
-                Sign in
-              </button>
-            </SignInButton>
+            <p className="text-xs text-muted-foreground">Free to start · No credit card required.</p>
           </div>
         </div>
 
@@ -146,25 +152,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="border-y bg-secondary/45">
-        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-12 md:grid-cols-[0.8fr_1.2fr]">
-          <div>
-            <p className="text-sm font-semibold text-primary">The concept</p>
-            <h2 className="mt-3 text-3xl font-bold leading-tight">A cooling-off period with memory.</h2>
-          </div>
-          <div className="space-y-5 text-base leading-8 text-muted-foreground">
-            <p>
-              Most bad decisions do not come from a lack of intelligence. They come from speed,
-              pressure, and the confidence of the first story that sounds good enough.
-            </p>
-            <p>
-              Time Locked turns hesitation into a system. The timer prevents immediate action, while
-              notes preserve the details that emerge after the initial impulse fades.
-            </p>
-          </div>
-        </div>
-      </section>
-
       <section className="mx-auto max-w-6xl px-5 py-14">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold text-primary">How it works</p>
@@ -190,8 +177,15 @@ export default function LandingPage() {
             <h2 className="mt-3 text-3xl font-bold leading-tight">Built for the whole decision lifecycle.</h2>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            {FEATURES.map(({ icon: Icon, label, text }) => (
-              <article key={label} className="rounded-md border bg-card p-5">
+            {FEATURES.map(({ icon: Icon, label, text, featured }) => (
+              <article
+                key={label}
+                className={
+                  featured
+                    ? "rounded-md border border-primary/30 bg-primary/5 p-5"
+                    : "rounded-md border bg-card p-5"
+                }
+              >
                 <Icon className="h-5 w-5 text-primary" />
                 <h3 className="mt-4 font-semibold">{label}</h3>
                 <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
@@ -211,7 +205,7 @@ export default function LandingPage() {
           </div>
           <SignUpButton mode="modal">
             <button className="inline-flex h-11 items-center justify-center rounded-md bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-              Create your first lock
+              Get started
             </button>
           </SignUpButton>
         </div>
