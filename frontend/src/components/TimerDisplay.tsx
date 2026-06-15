@@ -32,10 +32,10 @@ export default function TimerDisplay({ decision }: { decision: Decision }) {
         {decision.status === "expired" ? "Expired" : formatDuration(remaining)}
       </div>
 
-      <div className="w-full bg-secondary rounded-full h-2 overflow-hidden">
+      <div className="w-full bg-secondary rounded-md h-2 overflow-hidden">
         <div
           className={cn(
-            "h-full rounded-full transition-all duration-1000",
+            "h-full transition-all duration-1000",
             isLow ? "bg-destructive" : "bg-primary"
           )}
           style={{ width: `${pct}%` }}
