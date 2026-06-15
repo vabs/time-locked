@@ -1,28 +1,61 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { PlusCircle } from "lucide-react";
 import { useApi } from "@/lib/api";
-import type { Decision } from "@/lib/timer";
+import { getTimeRemaining, type Decision, type Tag } from "@/lib/timer";
 import DecisionCard from "@/components/DecisionCard";
+
+type SortOption = "newest" | "timeRemaining";
 
 export default function Dashboard() {
   const api = useApi();
   const [decisions, setDecisions] = useState<Decision[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const selectedTagId = searchParams.get("tag") ?? "all";
+  const sortOption: SortOption =
+    searchParams.get("sort") === "timeRemaining" ? "timeRemaining" : "newest";
 
   useEffect(() => {
-    api
-      .get("/decisions?status=running")
-      .then((data) => {
-        const paused: Decision[] = [];
-        api.get("/decisions?status=paused").then((p) => {
-          setDecisions([...data, ...p]);
-          setLoading(false);
-        });
-        void paused;
+    Promise.all([
+      api.get("/decisions?status=running"),
+      api.get("/decisions?status=paused"),
+      api.get("/tags"),
+    ])
+      .then(([running, paused, tagRows]) => {
+        setDecisions([...running, ...paused]);
+        setTags(tagRows);
+        setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const visibleDecisions = useMemo(() => {
+    const filtered =
+      selectedTagId === "all"
+        ? decisions
+        : decisions.filter((decision) =>
+            (decision.tags ?? []).some((tag) => tag.id === selectedTagId)
+          );
+
+    if (sortOption !== "timeRemaining") return filtered;
+
+    return [...filtered].sort((a, b) => getTimeRemaining(a) - getTimeRemaining(b));
+  }, [decisions, selectedTagId, sortOption]);
+
+  function updateSearchParam(key: "tag" | "sort", value: string) {
+    const next = new URLSearchParams(searchParams);
+
+    if ((key === "tag" && value === "all") || (key === "sort" && value === "newest")) {
+      next.delete(key);
+    } else {
+      next.set(key, value);
+    }
+
+    setSearchParams(next);
+  }
 
   if (loading) {
     return <div className="text-muted-foreground text-sm">Loading...</div>;
@@ -41,6 +74,38 @@ export default function Dashboard() {
         </Link>
       </div>
 
+      {decisions.length > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between mb-4">
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Tag
+            <select
+              value={selectedTagId}
+              onChange={(event) => updateSearchParam("tag", event.target.value)}
+              className="border rounded-md px-3 py-2 text-sm bg-background min-w-40 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="all">All tags</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Sort
+            <select
+              value={sortOption}
+              onChange={(event) => updateSearchParam("sort", event.target.value)}
+              className="border rounded-md px-3 py-2 text-sm bg-background min-w-44 focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="newest">Newest first</option>
+              <option value="timeRemaining">Time remaining</option>
+            </select>
+          </label>
+        </div>
+      )}
+
       {decisions.length === 0 ? (
         <div className="text-center py-16 text-muted-foreground">
           <p className="text-lg mb-2">No active decisions</p>
@@ -52,10 +117,20 @@ export default function Dashboard() {
             Create your first decision
           </Link>
         </div>
+      ) : visibleDecisions.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <p className="text-lg mb-2">No decisions match this filter</p>
+          <p className="text-sm">Try a different tag or show all tags.</p>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {decisions.map((d) => (
-            <DecisionCard key={d.id} decision={d} />
+          {visibleDecisions.map((d) => (
+            <DecisionCard
+              key={d.id}
+              decision={d}
+              tags={d.tags ?? []}
+              noteCount={d.noteCount ?? 0}
+            />
           ))}
         </div>
       )}
