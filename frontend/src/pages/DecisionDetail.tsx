@@ -81,12 +81,12 @@ export default function DecisionDetail() {
         ← Back
       </button>
 
-      <div className="border rounded-lg p-6 bg-card mb-6">
+      <div className="border rounded-md p-6 bg-card mb-6">
         <div className="flex flex-wrap gap-2 mb-4">
           {decision.tags.map((tag) => (
             <span
               key={tag.id}
-              className="text-xs px-2 py-0.5 rounded-full text-white"
+              className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium text-white"
               style={{ backgroundColor: tag.color }}
             >
               {tag.name}
@@ -132,7 +132,7 @@ export default function DecisionDetail() {
 
       {/* Outcome — only for expired decisions */}
       {decision.status === "expired" && (
-        <div className="border rounded-lg p-6 bg-card mb-6">
+        <div className="border rounded-md p-6 bg-card mb-6">
           <h2 className="font-semibold mb-3">What did you decide?</h2>
           {decision.outcome ? (
             <p className="text-sm">{decision.outcome}</p>
@@ -157,7 +157,7 @@ export default function DecisionDetail() {
       )}
 
       {/* Notes */}
-      <div className="border rounded-lg p-6 bg-card">
+      <div className="border rounded-md p-6 bg-card">
         <h2 className="font-semibold mb-4">Notes & Thoughts</h2>
 
         {decision.status !== "stopped" && (
