@@ -10,8 +10,8 @@ type SortOption = "newest" | "timeRemaining";
 export default function Dashboard() {
   const api = useApi();
   const [decisions, setDecisions] = useState<Decision[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
+  const [, forceTick] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const selectedTagId = searchParams.get("tag") ?? "all";
@@ -22,15 +22,30 @@ export default function Dashboard() {
     Promise.all([
       api.get("/decisions?status=running"),
       api.get("/decisions?status=paused"),
-      api.get("/tags"),
     ])
-      .then(([running, paused, tagRows]) => {
+      .then(([running, paused]) => {
         setDecisions([...running, ...paused]);
-        setTags(tagRows);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  // Re-sort while sorting by time remaining so order tracks the live countdown.
+  useEffect(() => {
+    if (sortOption !== "timeRemaining") return;
+    const interval = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(interval);
+  }, [sortOption]);
+
+  // Tag options come from the decisions actually loaded, so a filter never
+  // points at a tag with no matching cards.
+  const availableTags = useMemo(() => {
+    const byId = new Map<string, Tag>();
+    for (const decision of decisions) {
+      for (const tag of decision.tags ?? []) byId.set(tag.id, tag);
+    }
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [decisions]);
 
   const visibleDecisions = useMemo(() => {
     const filtered =
@@ -84,7 +99,7 @@ export default function Dashboard() {
               className="border rounded-md px-3 py-2 text-sm bg-background min-w-40 focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="all">All tags</option>
-              {tags.map((tag) => (
+              {availableTags.map((tag) => (
                 <option key={tag.id} value={tag.id}>
                   {tag.name}
                 </option>
@@ -125,12 +140,7 @@ export default function Dashboard() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {visibleDecisions.map((d) => (
-            <DecisionCard
-              key={d.id}
-              decision={d}
-              tags={d.tags ?? []}
-              noteCount={d.noteCount ?? 0}
-            />
+            <DecisionCard key={d.id} decision={d} />
           ))}
         </div>
       )}

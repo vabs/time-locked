@@ -1,15 +1,13 @@
 import { Link } from "react-router-dom";
-import { formatDuration, getTimeRemaining, type Decision, type Tag } from "@/lib/timer";
+import { formatDuration, getTimeRemaining, type Decision } from "@/lib/timer";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface Props {
   decision: Decision;
-  tags?: Tag[];
-  noteCount?: number;
 }
 
-export default function DecisionCard({ decision, tags, noteCount }: Props) {
+export default function DecisionCard({ decision }: Props) {
   const [remaining, setRemaining] = useState(() => getTimeRemaining(decision));
 
   useEffect(() => {
@@ -19,8 +17,8 @@ export default function DecisionCard({ decision, tags, noteCount }: Props) {
   }, [decision]);
 
   const pct = Math.max(0, Math.min(100, (remaining / decision.timerDuration) * 100));
-  const cardTags = tags ?? decision.tags ?? [];
-  const cardNoteCount = noteCount ?? decision.noteCount ?? 0;
+  const cardTags = decision.tags ?? [];
+  const cardNoteCount = decision.noteCount ?? 0;
   const notesText =
     cardNoteCount === 0
       ? "No notes added yet"
