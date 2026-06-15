@@ -12,6 +12,8 @@ export interface Decision {
   outcome: string | null;
   createdAt: string;
   updatedAt: string;
+  tags?: Tag[];
+  noteCount?: number;
 }
 
 export interface Note {

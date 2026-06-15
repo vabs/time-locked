@@ -1,9 +1,10 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
 import { decisions, decisionTags, notes, tags } from "../db/schema.js";
-import { and, desc, eq, inArray, isNull, or } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { requireAuth, getUserId } from "../middleware/auth.js";
 import { getAuthorizedTagIds } from "../services/tagAccess.js";
+import { buildDecisionListItems } from "../services/decisionList.js";
 import { randomUUID } from "crypto";
 
 const router = Router();
@@ -31,7 +32,27 @@ router.get("/", (req, res) => {
   ).orderBy(desc(decisions.createdAt));
 
   const rows = query.all();
-  res.json(rows);
+  if (rows.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  const decisionIds = rows.map((decision) => decision.id);
+  const decisionTagRows = db
+    .select({ decisionId: decisionTags.decisionId, tag: tags })
+    .from(decisionTags)
+    .innerJoin(tags, eq(decisionTags.tagId, tags.id))
+    .where(inArray(decisionTags.decisionId, decisionIds))
+    .all();
+
+  const noteCountRows = db
+    .select({ decisionId: notes.decisionId, noteCount: count(notes.id) })
+    .from(notes)
+    .where(inArray(notes.decisionId, decisionIds))
+    .groupBy(notes.decisionId)
+    .all();
+
+  res.json(buildDecisionListItems({ decisions: rows, tagRows: decisionTagRows, noteCountRows }));
 });
 
 router.get("/:id", (req, res) => {
