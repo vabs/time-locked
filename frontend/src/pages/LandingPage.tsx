@@ -117,7 +117,7 @@ export default function LandingPage() {
               <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
                 Time remaining
               </span>
-              <span className="font-mono text-2xl font-semibold tabular-nums">18:42:09</span>
+              <span className="font-mono text-2xl font-semibold tabular-nums">7h 26m 41s</span>
             </div>
             <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
               <div className="h-full w-[31%] rounded-full bg-status-running" />
