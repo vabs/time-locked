@@ -12,7 +12,7 @@ export default function Dashboard() {
   const api = useApi();
   const [decisions, setDecisions] = useState<Decision[]>([]);
   const [loading, setLoading] = useState(true);
-  const [, forceTick] = useState(0);
+  const [tick, setTick] = useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
 
   const selectedTagId = searchParams.get("tag") ?? "all";
@@ -34,7 +34,7 @@ export default function Dashboard() {
   // Re-sort while sorting by time remaining so order tracks the live countdown.
   useEffect(() => {
     if (sortOption !== "timeRemaining") return;
-    const interval = setInterval(() => forceTick((n) => n + 1), 1000);
+    const interval = setInterval(() => setTick((n) => n + 1), 1000);
     return () => clearInterval(interval);
   }, [sortOption]);
 
@@ -59,7 +59,9 @@ export default function Dashboard() {
     if (sortOption !== "timeRemaining") return filtered;
 
     return [...filtered].sort((a, b) => getTimeRemaining(a) - getTimeRemaining(b));
-  }, [decisions, selectedTagId, sortOption]);
+    // `tick` is intentionally a dependency: it forces a re-sort each second so
+    // the order tracks the live countdown (getTimeRemaining reads Date.now()).
+  }, [decisions, selectedTagId, sortOption, tick]);
 
   function updateSearchParam(key: "tag" | "sort", value: string) {
     const next = new URLSearchParams(searchParams);
