@@ -43,13 +43,14 @@ describe("DecisionCard", () => {
     });
 
     expect(screen.getByText("Work")).toBeInTheDocument();
-    expect(screen.getByText("3 notes added")).toBeInTheDocument();
+    expect(screen.getByText(/locked for 1 hour/)).toBeInTheDocument();
+    expect(screen.getByText("3 captured")).toBeInTheDocument();
   });
 
   it("shows empty metadata when no tags or notes have been added", () => {
     renderCard({ ...baseDecision, tags: [], noteCount: 0 });
 
-    expect(screen.getByText("No tags")).toBeInTheDocument();
-    expect(screen.getByText("No notes added yet")).toBeInTheDocument();
+    expect(screen.getByText("Locked for 1 hour")).toBeInTheDocument();
+    expect(screen.getByText("None yet")).toBeInTheDocument();
   });
 });

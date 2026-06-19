@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import { subscribeToPush } from "@/lib/push";
 import type { Tag } from "@/lib/timer";
+import { Button } from "@/components/Button";
 import { Trash2 } from "lucide-react";
 
 export default function Settings() {
@@ -45,33 +46,29 @@ export default function Settings() {
 
   return (
     <div className="max-w-lg flex flex-col gap-8">
-      <h1 className="text-2xl font-bold">Settings</h1>
+      <h1 className="font-display text-2xl font-semibold">Settings</h1>
 
       {/* Notifications */}
       <section className="border rounded-lg p-6 bg-card">
-        <h2 className="font-semibold mb-1">Notifications</h2>
+        <h2 className="font-display text-lg font-semibold mb-1">Notifications</h2>
         <p className="text-muted-foreground text-sm mb-4">
           Get notified when your decision timer expires.
         </p>
         {pushEnabled ? (
-          <div className="flex items-center gap-2 text-sm text-green-600">
-            <span className="w-2 h-2 bg-green-500 rounded-full" />
+          <div className="flex items-center gap-2 text-sm text-status-expired">
+            <span className="w-2 h-2 bg-status-expired rounded-full" />
             Push notifications enabled
           </div>
         ) : (
-          <button
-            onClick={handleEnablePush}
-            disabled={pushLoading}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 disabled:opacity-50"
-          >
+          <Button onClick={handleEnablePush} disabled={pushLoading}>
             {pushLoading ? "Enabling..." : "Enable push notifications"}
-          </button>
+          </Button>
         )}
       </section>
 
       {/* Custom tags */}
       <section className="border rounded-lg p-6 bg-card">
-        <h2 className="font-semibold mb-4">Custom Tags</h2>
+        <h2 className="font-display text-lg font-semibold mb-4">Custom Tags</h2>
 
         <form onSubmit={handleAddTag} className="flex gap-2 mb-4">
           <input
@@ -87,12 +84,7 @@ export default function Settings() {
             placeholder="Tag name"
             className="flex-1 border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
           />
-          <button
-            type="submit"
-            className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
-          >
-            Add
-          </button>
+          <Button type="submit">Add</Button>
         </form>
 
         {userTags.length > 0 && (
@@ -108,6 +100,7 @@ export default function Settings() {
                 </div>
                 <button
                   onClick={() => handleDeleteTag(tag.id)}
+                  aria-label={`Delete ${tag.name} tag`}
                   className="text-muted-foreground hover:text-destructive transition-colors"
                 >
                   <Trash2 className="w-4 h-4" />

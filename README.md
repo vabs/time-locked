@@ -24,7 +24,7 @@ Most bad decisions happen fast. Time Locked adds friction by design: you can't a
 | Layer | Choice |
 |---|---|
 | Frontend | React 18, Vite, TypeScript |
-| Styling | Tailwind CSS + shadcn/ui |
+| Styling | Tailwind CSS, custom "held time" theme (Fraunces · Inter · JetBrains Mono) |
 | PWA | vite-plugin-pwa, Web Push API |
 | Auth | Clerk (Google, Facebook, email/password) |
 | Backend | Node.js, Express v5, TypeScript |
@@ -40,9 +40,9 @@ Most bad decisions happen fast. Time Locked adds friction by design: you can't a
 time-locked/
 ├── frontend/               React PWA
 │   ├── src/
-│   │   ├── components/     Layout, TimerDisplay, DecisionCard, ConfirmDialog
+│   │   ├── components/     Layout, TimerDisplay (progress ring), DecisionCard, Button, Skeleton, ConfirmDialog
 │   │   ├── pages/          Dashboard, NewDecision, DecisionDetail, History, Settings
-│   │   └── lib/            API client, push helper, timer utilities
+│   │   └── lib/            API client, push helper, timer utilities, status palette
 │   └── public/sw.js        Service worker for push notifications
 ├── backend/                Express API
 │   └── src/

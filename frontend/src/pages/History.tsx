@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApi } from "@/lib/api";
 import type { Decision } from "@/lib/timer";
 import DecisionCard from "@/components/DecisionCard";
+import { Skeleton } from "@/components/Skeleton";
 
 type Filter = "all" | "expired" | "stopped";
 
@@ -20,11 +21,19 @@ export default function History() {
   const filtered =
     filter === "all" ? decisions : decisions.filter((d) => d.status === filter);
 
-  if (loading) return <div className="text-muted-foreground text-sm">Loading...</div>;
+  if (loading) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-44 rounded-lg" />
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">History</h1>
+      <h1 className="font-display text-2xl font-semibold mb-6">History</h1>
 
       <div className="flex gap-2 mb-6">
         {(["all", "expired", "stopped"] as Filter[]).map((f) => (
@@ -45,7 +54,7 @@ export default function History() {
       {filtered.length === 0 ? (
         <p className="text-muted-foreground text-sm text-center py-16">No decisions here yet.</p>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {filtered.map((d) => (
             <DecisionCard key={d.id} decision={d} />
           ))}

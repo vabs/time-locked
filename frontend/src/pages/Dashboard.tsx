@@ -4,6 +4,7 @@ import { PlusCircle } from "lucide-react";
 import { useApi } from "@/lib/api";
 import { getTimeRemaining, type Decision, type Tag } from "@/lib/timer";
 import DecisionCard from "@/components/DecisionCard";
+import { Skeleton } from "@/components/Skeleton";
 
 type SortOption = "newest" | "timeRemaining";
 
@@ -73,13 +74,19 @@ export default function Dashboard() {
   }
 
   if (loading) {
-    return <div className="text-muted-foreground text-sm">Loading...</div>;
+    return (
+      <div className="grid gap-4 sm:grid-cols-2">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Skeleton key={i} className="h-52 rounded-lg" />
+        ))}
+      </div>
+    );
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Active Decisions</h1>
+        <h1 className="font-display text-2xl font-semibold">Active Decisions</h1>
         <Link
           to="/new"
           className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors"
@@ -138,7 +145,7 @@ export default function Dashboard() {
           <p className="text-sm">Try a different tag or show all tags.</p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {visibleDecisions.map((d) => (
             <DecisionCard key={d.id} decision={d} />
           ))}

@@ -1,6 +1,12 @@
 import { Link } from "react-router-dom";
-import { formatDuration, getTimeRemaining, type Decision } from "@/lib/timer";
 import { useEffect, useState } from "react";
+import {
+  TIMER_PRESETS,
+  formatDuration,
+  getTimeRemaining,
+  type Decision,
+} from "@/lib/timer";
+import { STATUS_META } from "@/lib/status";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -17,65 +23,73 @@ export default function DecisionCard({ decision }: Props) {
   }, [decision]);
 
   const pct = Math.max(0, Math.min(100, (remaining / decision.timerDuration) * 100));
-  const cardTags = decision.tags ?? [];
-  const cardNoteCount = decision.noteCount ?? 0;
-  const notesText =
-    cardNoteCount === 0
-      ? "No notes added yet"
-      : `${cardNoteCount} ${cardNoteCount === 1 ? "note" : "notes"} added`;
+  const noteCount = decision.noteCount ?? 0;
+  const tags = decision.tags ?? [];
+  const isActive = decision.status === "running" || decision.status === "paused";
+  const meta = STATUS_META[decision.status];
+
+  const durationLabel =
+    TIMER_PRESETS.find((preset) => preset.value === decision.timerDuration)?.label ??
+    formatDuration(decision.timerDuration);
 
   return (
     <Link
       to={`/decisions/${decision.id}`}
-      className="block border rounded-lg p-4 bg-card hover:shadow-md transition-shadow"
+      className="block rounded-lg border bg-card p-5 transition-colors hover:border-primary/40"
     >
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <h3 className="font-medium text-sm line-clamp-2">{decision.title}</h3>
-        <span
-          className={cn(
-            "text-xs px-2 py-0.5 rounded-full shrink-0 capitalize",
-            decision.status === "running" && "bg-primary/10 text-primary",
-            decision.status === "paused" && "bg-yellow-100 text-yellow-800",
-            decision.status === "expired" && "bg-green-100 text-green-800",
-            decision.status === "stopped" && "bg-muted text-muted-foreground"
+      <div className="border-b pb-4">
+        <p className="font-display text-lg font-semibold leading-snug line-clamp-2">
+          {decision.title}
+        </p>
+        <p className="mt-1.5 text-xs text-muted-foreground line-clamp-1">
+          {tags.length > 0 && (
+            <>
+              {tags.map((tag, i) => (
+                <span key={tag.id}>
+                  <span className="font-medium" style={{ color: tag.color }}>
+                    {tag.name}
+                  </span>
+                  {i < tags.length - 1 ? ", " : null}
+                </span>
+              ))}
+              {" · locked for "}
+              {durationLabel}
+            </>
           )}
-        >
-          {decision.status}
-        </span>
+          {tags.length === 0 && `Locked for ${durationLabel}`}
+        </p>
       </div>
 
-      {decision.status !== "expired" && decision.status !== "stopped" && (
-        <>
-          <div className="text-2xl font-mono font-bold tabular-nums mb-2">
-            {formatDuration(remaining)}
+      {isActive && (
+        <div className="py-6">
+          <div className="mb-3 flex items-end justify-between">
+            <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+              Time remaining
+            </span>
+            <span className="font-mono text-2xl font-semibold tabular-nums">
+              {formatDuration(remaining)}
+            </span>
           </div>
-          <div className="w-full bg-secondary rounded-full h-1.5">
+          <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
             <div
-              className="h-full bg-primary rounded-full transition-all"
+              className={cn("h-full rounded-full transition-all", meta.dot)}
               style={{ width: `${pct}%` }}
             />
           </div>
-        </>
+        </div>
       )}
 
-      <div className="mt-3 space-y-2">
-        {cardTags.length > 0 ? (
-          <div className="flex flex-wrap gap-1">
-            {cardTags.map((tag) => (
-              <span
-                key={tag.id}
-                className="text-xs px-2 py-0.5 rounded-full text-white"
-                style={{ backgroundColor: tag.color }}
-              >
-                {tag.name}
-              </span>
-            ))}
-          </div>
-        ) : (
-          <p className="text-xs text-muted-foreground">No tags</p>
-        )}
-
-        <p className="text-xs text-muted-foreground">{notesText}</p>
+      <div className={cn("grid grid-cols-2 gap-3", !isActive && "pt-5")}>
+        <div className="rounded-md border bg-background/40 p-3">
+          <p className="text-xs text-muted-foreground">Status</p>
+          <p className={cn("mt-1 text-sm font-semibold", meta.text)}>{meta.label}</p>
+        </div>
+        <div className="rounded-md border bg-background/40 p-3">
+          <p className="text-xs text-muted-foreground">Notes</p>
+          <p className="mt-1 text-sm font-semibold">
+            {noteCount === 0 ? "None yet" : `${noteCount} captured`}
+          </p>
+        </div>
       </div>
     </Link>
   );
