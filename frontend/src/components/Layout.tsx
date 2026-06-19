@@ -17,7 +17,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b bg-card px-4 py-3 flex items-center justify-between sticky top-0 z-10">
-        <Link to="/" className="flex items-center gap-2 font-semibold text-primary">
+        <Link to="/" className="flex items-center gap-2 font-display text-lg font-semibold text-primary">
           <Clock className="w-5 h-5" />
           Time Locked
         </Link>

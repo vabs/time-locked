@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApi } from "@/lib/api";
 import { TIMER_PRESETS, type Tag } from "@/lib/timer";
+import { Button } from "@/components/Button";
 import { cn } from "@/lib/utils";
 
 export default function NewDecision() {
@@ -45,7 +46,7 @@ export default function NewDecision() {
 
   return (
     <div className="max-w-lg">
-      <h1 className="text-2xl font-bold mb-6">New Decision</h1>
+      <h1 className="font-display text-2xl font-semibold mb-6">New Decision</h1>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         <div>
@@ -121,13 +122,9 @@ export default function NewDecision() {
 
         {error && <p className="text-destructive text-sm">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
-        >
+        <Button type="submit" disabled={submitting}>
           {submitting ? "Starting timer..." : "Lock in decision"}
-        </button>
+        </Button>
       </form>
     </div>
   );
