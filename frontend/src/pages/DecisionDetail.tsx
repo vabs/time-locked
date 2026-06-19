@@ -4,8 +4,10 @@ import { useApi } from "@/lib/api";
 import type { Decision, Note, Tag } from "@/lib/timer";
 import TimerDisplay from "@/components/TimerDisplay";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { Button } from "@/components/Button";
+import { Skeleton } from "@/components/Skeleton";
 import { formatDistanceToNow } from "date-fns";
-import { Pause, Play, Square, Send } from "lucide-react";
+import { Pause, Play, Square, Send, Trash2, ArrowLeft } from "lucide-react";
 
 interface DecisionWithDetails extends Decision {
   notes: Note[];
@@ -20,6 +22,7 @@ export default function DecisionDetail() {
   const [noteContent, setNoteContent] = useState("");
   const [outcome, setOutcome] = useState("");
   const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   async function load() {
@@ -59,6 +62,13 @@ export default function DecisionDetail() {
     load();
   }
 
+  async function handleDeleteNote() {
+    if (!noteToDelete) return;
+    await api.del(`/decisions/${id}/notes/${noteToDelete}`);
+    setNoteToDelete(null);
+    load();
+  }
+
   async function handleOutcome(e: React.FormEvent) {
     e.preventDefault();
     if (!outcome.trim()) return;
@@ -67,7 +77,13 @@ export default function DecisionDetail() {
   }
 
   if (loading || !decision) {
-    return <div className="text-muted-foreground text-sm">Loading...</div>;
+    return (
+      <div className="max-w-2xl space-y-6">
+        <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-80 rounded-lg" />
+        <Skeleton className="h-40 rounded-lg" />
+      </div>
+    );
   }
 
   const canControl = decision.status === "running" || decision.status === "paused";
@@ -76,66 +92,59 @@ export default function DecisionDetail() {
     <div className="max-w-2xl">
       <button
         onClick={() => navigate(-1)}
-        className="text-sm text-muted-foreground hover:text-foreground mb-4 block"
+        className="mb-4 flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
-        ← Back
+        <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
-      <div className="border rounded-md p-6 bg-card mb-6">
-        <div className="flex flex-wrap gap-2 mb-4">
-          {decision.tags.map((tag) => (
-            <span
-              key={tag.id}
-              className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium text-white"
-              style={{ backgroundColor: tag.color }}
-            >
-              {tag.name}
-            </span>
-          ))}
-        </div>
+      <div className="border rounded-lg p-6 bg-card mb-6">
+        {decision.tags.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {decision.tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium text-white"
+                style={{ backgroundColor: tag.color }}
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
 
-        <h1 className="text-xl font-bold mb-2">{decision.title}</h1>
+        <h1 className="font-display text-2xl font-semibold leading-snug mb-2">{decision.title}</h1>
         {decision.description && (
           <p className="text-muted-foreground text-sm mb-4">{decision.description}</p>
         )}
 
-        <div className="my-6">
+        <div className="my-8">
           <TimerDisplay decision={decision} />
         </div>
 
         {canControl && (
           <div className="flex gap-2 justify-center">
             {decision.status === "running" ? (
-              <button
-                onClick={handlePause}
-                className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium hover:bg-accent transition-colors"
-              >
+              <Button variant="outline" onClick={handlePause}>
                 <Pause className="w-4 h-4" /> Pause
-              </button>
+              </Button>
             ) : (
-              <button
-                onClick={handleResume}
-                className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm font-medium hover:bg-accent transition-colors"
-              >
+              <Button variant="outline" onClick={handleResume}>
                 <Play className="w-4 h-4" /> Resume
-              </button>
+              </Button>
             )}
-            <button
-              onClick={() => setShowStopConfirm(true)}
-              className="flex items-center gap-2 px-4 py-2 border border-destructive text-destructive rounded-md text-sm font-medium hover:bg-destructive/10 transition-colors"
-            >
+            <Button variant="destructive" onClick={() => setShowStopConfirm(true)}>
               <Square className="w-4 h-4" /> Stop
-            </button>
+            </Button>
           </div>
         )}
       </div>
 
       {/* Outcome — only for expired decisions */}
       {decision.status === "expired" && (
-        <div className="border rounded-md p-6 bg-card mb-6">
-          <h2 className="font-semibold mb-3">What did you decide?</h2>
+        <div className="border rounded-lg p-6 bg-card mb-6">
+          <h2 className="font-display text-lg font-semibold mb-3">What did you decide?</h2>
           {decision.outcome ? (
-            <p className="text-sm">{decision.outcome}</p>
+            <p className="text-sm leading-6">{decision.outcome}</p>
           ) : (
             <form onSubmit={handleOutcome} className="flex gap-2">
               <input
@@ -145,20 +154,15 @@ export default function DecisionDetail() {
                 placeholder="Record your outcome..."
                 className="flex-1 border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               />
-              <button
-                type="submit"
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90"
-              >
-                Save
-              </button>
+              <Button type="submit">Save</Button>
             </form>
           )}
         </div>
       )}
 
       {/* Notes */}
-      <div className="border rounded-md p-6 bg-card">
-        <h2 className="font-semibold mb-4">Notes & Thoughts</h2>
+      <div className="border rounded-lg p-6 bg-card">
+        <h2 className="font-display text-lg font-semibold mb-4">Notes &amp; Thoughts</h2>
 
         {decision.status !== "stopped" && (
           <form onSubmit={handleAddNote} className="flex gap-2 mb-4">
@@ -169,12 +173,9 @@ export default function DecisionDetail() {
               placeholder="Add a thought or consideration..."
               className="flex-1 border rounded-md px-3 py-2 text-sm bg-background focus:outline-none focus:ring-2 focus:ring-ring"
             />
-            <button
-              type="submit"
-              className="bg-primary text-primary-foreground p-2 rounded-md hover:bg-primary/90"
-            >
+            <Button type="submit" size="icon" aria-label="Add note">
               <Send className="w-4 h-4" />
-            </button>
+            </Button>
           </form>
         )}
 
@@ -185,8 +186,19 @@ export default function DecisionDetail() {
             </p>
           )}
           {decision.notes.map((note) => (
-            <div key={note.id} className="border rounded-md p-3 text-sm">
-              <p>{note.content}</p>
+            <div key={note.id} className="border rounded-md p-3 text-sm bg-background/40">
+              <div className="flex items-start justify-between gap-2">
+                <p className="flex-1">{note.content}</p>
+                {decision.status !== "stopped" && (
+                  <button
+                    onClick={() => setNoteToDelete(note.id)}
+                    aria-label="Delete note"
+                    className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
               <span className="text-xs text-muted-foreground mt-1 block">
                 {formatDistanceToNow(new Date(note.createdAt), { addSuffix: true })}
               </span>
@@ -202,6 +214,16 @@ export default function DecisionDetail() {
         confirmLabel="Stop decision"
         onConfirm={handleStop}
         onCancel={() => setShowStopConfirm(false)}
+        danger
+      />
+
+      <ConfirmDialog
+        open={noteToDelete !== null}
+        title="Delete this note?"
+        description="This note will be permanently removed. This cannot be undone."
+        confirmLabel="Delete note"
+        onConfirm={handleDeleteNote}
+        onCancel={() => setNoteToDelete(null)}
         danger
       />
     </div>
