@@ -4,7 +4,6 @@ import {
   Bell,
   CheckCircle2,
   Clock,
-  LockKeyhole,
   NotebookPen,
   Pause,
   Tags,
@@ -55,7 +54,7 @@ export default function LandingPage() {
     <main className="min-h-screen bg-background text-foreground">
       <header className="border-b bg-background/95">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-4">
-          <div className="flex items-center gap-2 font-semibold text-primary">
+          <div className="flex items-center gap-2 font-display text-lg font-semibold text-primary">
             <Clock className="h-5 w-5" />
             <span>Time Locked</span>
           </div>
@@ -82,13 +81,13 @@ export default function LandingPage() {
                 key={signal}
                 className="inline-flex items-center gap-2 rounded-md border bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground"
               >
-                <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
+                <CheckCircle2 className="h-3.5 w-3.5 text-status-expired" />
                 {signal}
               </span>
             ))}
           </div>
 
-          <h1 className="max-w-3xl text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+          <h1 className="max-w-3xl font-display text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">
             Make fewer decisions in a rush.
           </h1>
           <p className="mt-5 max-w-2xl text-lg leading-8 text-muted-foreground">
@@ -107,46 +106,32 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="rounded-md border bg-card p-4 shadow-sm">
+        <div className="rounded-lg border bg-card p-5">
           <div className="border-b pb-4">
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-semibold">Should I accept the offer?</p>
-                <p className="mt-1 text-xs text-muted-foreground">Career · locked for 24 hours</p>
-              </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
-                <LockKeyhole className="h-5 w-5" />
-              </div>
-            </div>
+            <p className="font-display text-lg font-semibold">Should I accept the offer?</p>
+            <p className="mt-1.5 text-xs text-muted-foreground">Career · locked for 24 hours</p>
           </div>
 
           <div className="py-6">
             <div className="mb-3 flex items-end justify-between">
-              <span className="text-sm font-medium text-muted-foreground">Time remaining</span>
-              <span className="text-2xl font-bold tabular-nums">18:42:09</span>
+              <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                Time remaining
+              </span>
+              <span className="font-mono text-2xl font-semibold tabular-nums">18:42:09</span>
             </div>
-            <div className="h-2 overflow-hidden rounded-md bg-secondary">
-              <div className="h-full w-[31%] bg-primary" />
+            <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
+              <div className="h-full w-[31%] rounded-full bg-status-running" />
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="rounded-md border bg-background p-3">
-              <p className="text-xs font-semibold uppercase text-muted-foreground">New note</p>
-              <p className="mt-2 text-sm leading-6">
-                I am reacting to relief more than long-term fit. Ask about manager expectations before
-                deciding.
-              </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-md border bg-background/40 p-3">
+              <p className="text-xs text-muted-foreground">Status</p>
+              <p className="mt-1 text-sm font-semibold text-status-running">Running</p>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-md border bg-background p-3">
-                <p className="text-xs text-muted-foreground">Status</p>
-                <p className="mt-1 text-sm font-semibold text-amber-700">Running</p>
-              </div>
-              <div className="rounded-md border bg-background p-3">
-                <p className="text-xs text-muted-foreground">Notes</p>
-                <p className="mt-1 text-sm font-semibold">4 captured</p>
-              </div>
+            <div className="rounded-md border bg-background/40 p-3">
+              <p className="text-xs text-muted-foreground">Notes</p>
+              <p className="mt-1 text-sm font-semibold">4 captured</p>
             </div>
           </div>
         </div>
@@ -155,7 +140,7 @@ export default function LandingPage() {
       <section className="mx-auto max-w-6xl px-5 py-14">
         <div className="max-w-2xl">
           <p className="text-sm font-semibold text-primary">How it works</p>
-          <h2 className="mt-3 text-3xl font-bold">From impulse to recorded judgment.</h2>
+          <h2 className="mt-3 font-display text-3xl font-semibold">From impulse to recorded judgment.</h2>
         </div>
         <div className="mt-8 grid gap-4 md:grid-cols-4">
           {STEPS.map((step, index) => (
@@ -171,34 +156,25 @@ export default function LandingPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-5 pb-16">
-        <div className="grid gap-8 lg:grid-cols-[0.7fr_1.3fr]">
-          <div>
-            <p className="text-sm font-semibold text-primary">Product details</p>
-            <h2 className="mt-3 text-3xl font-bold leading-tight">Built for the whole decision lifecycle.</h2>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {FEATURES.map(({ icon: Icon, label, text, featured }) => (
-              <article
-                key={label}
-                className={
-                  featured
-                    ? "rounded-md border border-primary/30 bg-primary/5 p-5"
-                    : "rounded-md border bg-card p-5"
-                }
-              >
-                <Icon className="h-5 w-5 text-primary" />
-                <h3 className="mt-4 font-semibold">{label}</h3>
-                <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
-              </article>
-            ))}
-          </div>
+        <div className="max-w-2xl">
+          <p className="text-sm font-semibold text-primary">Product details</p>
+          <h2 className="mt-3 font-display text-3xl font-semibold leading-tight">Built for the whole decision lifecycle.</h2>
+        </div>
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map(({ icon: Icon, label, text }) => (
+            <article key={label} className="rounded-md border bg-card p-5">
+              <Icon className="h-5 w-5 text-primary" />
+              <h3 className="mt-4 font-semibold">{label}</h3>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">{text}</p>
+            </article>
+          ))}
         </div>
       </section>
 
       <section className="border-t bg-card">
         <div className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-10 md:flex-row md:items-center md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold">Give important choices a second pass.</h2>
+            <h2 className="font-display text-2xl font-semibold">Give important choices a second pass.</h2>
             <p className="mt-2 text-sm text-muted-foreground">
               Start with one decision you would normally make too quickly.
             </p>
