@@ -49,10 +49,12 @@ export function formatDuration(seconds: number): string {
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s}s`;
-  return `${s}s`;
+  const parts: string[] = [];
+  if (d > 0) parts.push(`${d}d`);
+  if (d > 0 || h > 0) parts.push(`${h}h`);
+  if (d > 0 || h > 0 || m > 0) parts.push(`${m}m`);
+  parts.push(`${s}s`);
+  return parts.join(" ");
 }
 
 export const TIMER_PRESETS = [
