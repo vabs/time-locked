@@ -1,10 +1,11 @@
 import { Router } from "express";
 import { db } from "../db/index.js";
-import { decisions, decisionTags, notes, tags } from "../db/schema.js";
+import { decisions, decisionTags, notes, tags, type Decision } from "../db/schema.js";
 import { and, count, desc, eq, inArray, isNull, or } from "drizzle-orm";
 import { requireAuth, getUserId } from "../middleware/auth.js";
 import { getAuthorizedTagIds } from "../services/tagAccess.js";
 import { buildDecisionListItems } from "../services/decisionList.js";
+import { hasTimerElapsed } from "../services/decisionTimer.js";
 import { randomUUID } from "crypto";
 
 const router = Router();
@@ -18,11 +19,42 @@ function parseDecisionStatus(value: unknown): DecisionStatus | undefined {
     : undefined;
 }
 
+// Lazily flip an elapsed running timer to "expired" so reads and the outcome
+// endpoint don't depend on the 30s scheduler poll. Returns the current decision.
+function expireIfElapsed(decision: Decision, now: Date): Decision {
+  if (!hasTimerElapsed(decision, now)) return decision;
+  db.update(decisions)
+    .set({ status: "expired", updatedAt: now })
+    .where(eq(decisions.id, decision.id))
+    .run();
+  return { ...decision, status: "expired", updatedAt: now };
+}
+
+// Reconcile every elapsed running timer for a user before a list read so status
+// filters (dashboard "running", history "expired") return accurate results.
+function reconcileExpired(userId: string): void {
+  const now = new Date();
+  const running = db
+    .select()
+    .from(decisions)
+    .where(and(eq(decisions.userId, userId), eq(decisions.status, "running")))
+    .all();
+  const elapsedIds = running.filter((d) => hasTimerElapsed(d, now)).map((d) => d.id);
+  if (elapsedIds.length) {
+    db.update(decisions)
+      .set({ status: "expired", updatedAt: now })
+      .where(inArray(decisions.id, elapsedIds))
+      .run();
+  }
+}
+
 router.use(requireAuth);
 
 router.get("/", (req, res) => {
   const userId = getUserId(req);
   const status = parseDecisionStatus(req.query.status);
+
+  reconcileExpired(userId);
 
   const query = db.select().from(decisions).where(
     and(
@@ -65,6 +97,8 @@ router.get("/:id", (req, res) => {
 
   if (!decision) { res.status(404).json({ error: "Not found" }); return; }
 
+  const current = expireIfElapsed(decision, new Date());
+
   const decisionNotes = db
     .select()
     .from(notes)
@@ -79,7 +113,7 @@ router.get("/:id", (req, res) => {
     .where(eq(decisionTags.decisionId, decision.id))
     .all();
 
-  res.json({ ...decision, notes: decisionNotes, tags: decisionTagRows.map((r) => r.tag) });
+  res.json({ ...current, notes: decisionNotes, tags: decisionTagRows.map((r) => r.tag) });
 });
 
 router.post("/", (req, res) => {
@@ -238,8 +272,14 @@ router.patch("/:id/outcome", (req, res) => {
     .get();
 
   if (!decision) { res.status(404).json({ error: "Not found" }); return; }
-  if (decision.status !== "expired") {
-    res.status(400).json({ error: "Can only record outcome on expired decisions" });
+
+  const current = expireIfElapsed(decision, new Date());
+  // Outcome can be recorded once a decision is terminal: the timer expired or
+  // it was stopped early (decided ahead of time).
+  if (current.status !== "expired" && current.status !== "stopped") {
+    res.status(400).json({
+      error: "Can only record an outcome once the timer has ended or the decision was stopped",
+    });
     return;
   }
 

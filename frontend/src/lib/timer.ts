@@ -43,6 +43,16 @@ export function getTimeRemaining(decision: Decision): number {
   return Math.max(0, decision.timerDuration - elapsed);
 }
 
+// A running timer that has counted down to zero is effectively expired, even
+// before the backend's 30s scheduler poll persists the change. Derive that
+// here so the UI can surface the expired state (and outcome form) immediately.
+export function getEffectiveStatus(decision: Decision): TimerStatus {
+  if (decision.status === "running" && getTimeRemaining(decision) <= 0) {
+    return "expired";
+  }
+  return decision.status;
+}
+
 export function formatDuration(seconds: number): string {
   if (seconds <= 0) return "0s";
   const d = Math.floor(seconds / 86400);

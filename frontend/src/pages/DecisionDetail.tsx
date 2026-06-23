@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useApi } from "@/lib/api";
-import type { Decision, Note, Tag } from "@/lib/timer";
+import { getEffectiveStatus, type Decision, type Note, type Tag } from "@/lib/timer";
 import TimerDisplay from "@/components/TimerDisplay";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { Button } from "@/components/Button";
@@ -24,6 +24,7 @@ export default function DecisionDetail() {
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [noteToDelete, setNoteToDelete] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [, setTick] = useState(0);
 
   async function load() {
     try {
@@ -37,6 +38,15 @@ export default function DecisionDetail() {
   }
 
   useEffect(() => { load(); }, [id]);
+
+  // Tick every second while running so the page re-derives effective status and
+  // surfaces the outcome form the moment the countdown reaches zero — without
+  // waiting for the 30s server poll or a manual reload.
+  useEffect(() => {
+    if (!decision || decision.status !== "running") return;
+    const interval = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(interval);
+  }, [decision]);
 
   async function handlePause() {
     await api.patch(`/decisions/${id}/pause`);
@@ -86,7 +96,15 @@ export default function DecisionDetail() {
     );
   }
 
-  const canControl = decision.status === "running" || decision.status === "paused";
+  const status = getEffectiveStatus(decision);
+  // Drive TimerDisplay with the effective status so the ring/label match the
+  // form (TimerDisplay keys its countdown effect on primitive timer fields, so
+  // this fresh wrapper object each tick won't reset its interval).
+  const view = { ...decision, status };
+  const canControl = status === "running" || status === "paused";
+  // Both expired (timer ran out) and stopped (decided early) are terminal
+  // states where a decision was reached, so both can record an outcome.
+  const canRecordOutcome = status === "expired" || status === "stopped";
 
   return (
     <div className="max-w-2xl">
@@ -118,12 +136,12 @@ export default function DecisionDetail() {
         )}
 
         <div className="my-8">
-          <TimerDisplay decision={decision} />
+          <TimerDisplay decision={view} />
         </div>
 
         {canControl && (
           <div className="flex gap-2 justify-center">
-            {decision.status === "running" ? (
+            {status === "running" ? (
               <Button variant="outline" onClick={handlePause}>
                 <Pause className="w-4 h-4" /> Pause
               </Button>
@@ -139,8 +157,8 @@ export default function DecisionDetail() {
         )}
       </div>
 
-      {/* Outcome — only for expired decisions */}
-      {decision.status === "expired" && (
+      {/* Outcome — for terminal decisions (expired or stopped) */}
+      {canRecordOutcome && (
         <div className="border rounded-lg p-6 bg-card mb-6">
           <h2 className="font-display text-lg font-semibold mb-3">What did you decide?</h2>
           {decision.outcome ? (

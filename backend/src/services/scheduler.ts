@@ -1,8 +1,9 @@
 import cron from "node-cron";
 import { db } from "../db/index.js";
 import { decisions } from "../db/schema.js";
-import { and, eq, lte } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { sendPushToUser } from "./push.js";
+import { hasTimerElapsed } from "./decisionTimer.js";
 
 export function startScheduler() {
   // Poll every 30 seconds for expired timers
@@ -16,13 +17,7 @@ export function startScheduler() {
       .all();
 
     for (const decision of running) {
-      if (!decision.timerStartedAt) continue;
-
-      const elapsed =
-        (now.getTime() - decision.timerStartedAt.getTime()) / 1000 +
-        decision.timeElapsedBeforePause;
-
-      if (elapsed >= decision.timerDuration) {
+      if (hasTimerElapsed(decision, now)) {
         db.update(decisions)
           .set({ status: "expired", updatedAt: now })
           .where(eq(decisions.id, decision.id))
