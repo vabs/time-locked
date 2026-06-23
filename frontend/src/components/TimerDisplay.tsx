@@ -20,7 +20,15 @@ export default function TimerDisplay({ decision }: { decision: Decision }) {
       setRemaining(getTimeRemaining(decision));
     }, 1000);
     return () => clearInterval(interval);
-  }, [decision]);
+    // Key on the primitive timer fields, not object identity: a parent that
+    // passes a fresh decision wrapper each render (with unchanged timing) must
+    // not reset the countdown interval.
+  }, [
+    decision.status,
+    decision.timerStartedAt,
+    decision.timeElapsedBeforePause,
+    decision.timerDuration,
+  ]);
 
   const status = decision.status;
   const meta = STATUS_META[status];
