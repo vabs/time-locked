@@ -183,6 +183,32 @@ SQLite data persists in a named Docker volume (`db-data`). Set all env vars from
 | `POST` | `/api/push/subscribe` | Register push subscription |
 | `DELETE` | `/api/push/unsubscribe` | Remove push subscription |
 
+## CLI
+
+The Time Locked CLI is available as the `@time-locked/cli` workspace package.
+
+```bash
+npm run build -w cli
+npm run dev -w cli -- --help
+```
+
+The CLI talks to the backend API. It does not read or write the SQLite database directly.
+
+Basic usage:
+
+```bash
+npm run dev -w cli -- login --api-url http://localhost:3001
+npm run dev -w cli -- decisions create
+npm run dev -w cli -- decisions list --active
+```
+
+CLI login requires the backend to expose public Clerk OAuth config:
+
+```env
+CLERK_OAUTH_ISSUER_URL=
+CLERK_OAUTH_CLIENT_ID=
+```
+
 ## Roadmap
 
 - [ ] CLI client
